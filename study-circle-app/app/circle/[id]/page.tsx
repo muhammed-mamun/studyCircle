@@ -1,15 +1,11 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { loadState, saveState } from '@/lib/store';
 import { CIRCLES } from '@/lib/circleData';
 import { StudyCircle, ActivityItem } from '@/lib/types';
 import ShikhoNav from '@/components/ShikhoNav';
-
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
 
 const TYPE_LABELS: Record<ActivityItem['type'], string> = {
   studied: 'পড়েছি',
@@ -35,9 +31,12 @@ const ACTION_EMOJIS: Record<ActivityItem['type'], string> = {
   joined: '🎉',
 };
 
-export default function CircleHomePage({ params }: PageProps) {
-  const { id } = use(params);
+export default function CircleHomePage() {
+  const params = useParams() as { id?: string };
   const router = useRouter();
+  
+  // Safe decoding in case it's URI encoded
+  const id = params?.id ? decodeURIComponent(params.id) : '';
 
   const [circle, setCircle] = useState<StudyCircle | null>(null);
   const [feed, setFeed] = useState<ActivityItem[]>([]);
@@ -55,8 +54,18 @@ export default function CircleHomePage({ params }: PageProps) {
     setJoinedCircleId(state.joinedCircleId);
     setProfile(state.studentProfile);
 
+    if (!id) return; // Wait for router params to be ready
+
     const found = CIRCLES.find((c) => c.id === id);
-    if (!found) { router.replace('/'); return; }
+    if (!found) { 
+      console.warn("Circle not found for id:", id);
+      // Clear invalid joinedCircleId and redirect to circles page
+      if (state.joinedCircleId === id) {
+        saveState({ joinedCircleId: null });
+      }
+      router.replace('/circles'); 
+      return; 
+    }
     setCircle(found);
     setFeed(found.activity);
     const initReactions: Record<string, number> = {};
