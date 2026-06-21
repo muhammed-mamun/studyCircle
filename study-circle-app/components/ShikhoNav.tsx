@@ -44,7 +44,7 @@ export default function ShikhoNav({ classLabel = 'ক্লাস ১২', hasCi
             onClick={() => router.push(`/circle/${circleId}`)}
             style={{ position: 'relative' }}
           >
-            🤝 <span className="hidden md:inline">StudyCircle</span>
+            🤝 <span className="hidden md:inline">সার্কেল</span>
             <span
               style={{
                 position: 'absolute',

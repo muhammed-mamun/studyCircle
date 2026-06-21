@@ -277,7 +277,7 @@ export default function CircleHomePage() {
           <div className="flex flex-col-reverse lg:flex-row gap-6">
 
             {/* ── Left sidebar ── */}
-            <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="w-full lg:w-80 shrink-0">
 
               {/* Members card */}
               <div className="card members-card">
