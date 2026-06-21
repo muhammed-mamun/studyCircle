@@ -1,12 +1,13 @@
 import { StudentProfile, StudyCircle, ClassLevel, Goal, Subject, TimeSlot } from './types';
 import { CIRCLES } from './circleData';
 
-// Scoring weights
+// Scoring weights (Total 100)
 const WEIGHTS = {
-  classMatch: 40,
-  goalMatch: 30,
+  classMatch: 35,
+  goalMatch: 25,
   subjectOverlap: 20,
   timeSlotMatch: 10,
+  languageMatch: 10,
 };
 
 // Class adjacency map — same level (SSC / HSC) gives partial credit
@@ -40,6 +41,11 @@ function scoreSubjectOverlap(studentSubjects: Subject[], circleSubjects: Subject
 
 function scoreTimeSlot(studentTime: TimeSlot, circleTimes: TimeSlot[]): number {
   return circleTimes.includes(studentTime) ? WEIGHTS.timeSlotMatch : 0;
+}
+
+function scoreLanguageMatch(studentLang: string, circleLang: string): number {
+  if (circleLang === 'both' || studentLang === 'both') return WEIGHTS.languageMatch;
+  return circleLang === studentLang ? WEIGHTS.languageMatch : 0;
 }
 
 export interface MatchResult {
@@ -81,6 +87,12 @@ const TIME_LABELS: Record<TimeSlot, string> = {
   night: 'রাত',
 };
 
+const LANGUAGE_LABELS: Record<string, string> = {
+  bangla: 'বাংলা',
+  english: 'ইংরেজি',
+  both: 'বাংলা ও ইংরেজি',
+};
+
 function buildReasons(profile: StudentProfile, circle: StudyCircle): string[] {
   const reasons: string[] = [];
 
@@ -111,6 +123,11 @@ function buildReasons(profile: StudentProfile, circle: StudyCircle): string[] {
     reasons.push(`পড়ার সময় মিলেছে: ${TIME_LABELS[profile.timeSlot]}`);
   }
 
+  // Language
+  if (circle.language === profile.language || circle.language === 'both' || profile.language === 'both') {
+    reasons.push(`মাধ্যম মিলেছে: ${circle.language === 'both' ? 'বাংলা/ইংরেজি' : LANGUAGE_LABELS[circle.language]}`);
+  }
+
   return reasons;
 }
 
@@ -120,8 +137,9 @@ export function matchCircles(profile: StudentProfile): MatchResult[] {
     const goalScore = scoreGoalMatch(profile.goals, circle.goals);
     const subjectScore = scoreSubjectOverlap(profile.weakSubjects, circle.subjects);
     const timeScore = scoreTimeSlot(profile.timeSlot, circle.timeSlot);
+    const languageScore = scoreLanguageMatch(profile.language, circle.language);
 
-    const total = classScore + goalScore + subjectScore + timeScore;
+    const total = classScore + goalScore + subjectScore + timeScore + languageScore;
     // Add slight jitter to avoid ties (based on member activity proxy)
     const jitter = (circle.members.reduce((acc, m) => acc + m.streak, 0) % 5);
     const finalScore = Math.min(100, total + jitter);
@@ -146,6 +164,7 @@ export function buildProfileSummary(profile: StudentProfile): string {
       ? profile.weakSubjects.map((s) => SUBJECT_LABELS[s]).join(', ')
       : 'সব বিষয়';
   const timeLabel = TIME_LABELS[profile.timeSlot];
+  const langLabel = LANGUAGE_LABELS[profile.language];
 
-  return `তুমি ${classLabel}-এর একজন শিক্ষার্থী যে ${goalLabel}-এ মনোযোগী। ${subjectLabel}-এ একটু বেশি মনোযোগ দিতে চাও এবং ${timeLabel}ে পড়তে পছন্দ করো।`;
+  return `তুমি ${classLabel}-এর একজন শিক্ষার্থী যে ${goalLabel}-এ মনোযোগী। ${subjectLabel}-এ একটু বেশি মনোযোগ দিতে চাও, ${timeLabel}ে পড়তে পছন্দ করো এবং ${langLabel} মাধ্যমে স্বাচ্ছন্দ্য বোধ করো।`;
 }

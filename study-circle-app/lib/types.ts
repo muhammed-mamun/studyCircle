@@ -19,6 +19,7 @@ export interface Member {
   class: ClassLevel;
   lastActive: string;
   streak: number;
+  role?: 'captain' | 'member';
 }
 
 export interface ActivityItem {
@@ -33,10 +34,20 @@ export interface ActivityItem {
   reactions: number;
 }
 
+export interface Milestone {
+  label: string;
+  achieved: boolean;
+  emoji: string;
+}
+
 export interface StudyCircle {
   id: string;
   name: string;
   tagline: string;
+  description: string;          // What this circle is actually about
+  studyApproach: string[];      // How they study together
+  rules: string[];              // Group norms (2-3 lines)
+  tags: string[];               // Quick-scan labels
   class: ClassLevel[];
   goals: Goal[];
   subjects: Subject[];
@@ -49,6 +60,10 @@ export interface StudyCircle {
   weeklyTarget: string;
   coverEmoji: string;
   color: string;
+  weeklyStreak: number;         // Consecutive active weeks
+  milestones: Milestone[];
+  founded: string;              // e.g. "৩ সপ্তাহ আগে"
+  language: 'bangla' | 'english' | 'both';
 }
 
 export interface AppState {

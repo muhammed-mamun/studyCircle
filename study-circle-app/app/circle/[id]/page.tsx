@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadState, saveState } from '@/lib/store';
 import { CIRCLES } from '@/lib/circleData';
-import { StudyCircle, ActivityItem, Member } from '@/lib/types';
+import { StudyCircle, ActivityItem } from '@/lib/types';
 import ShikhoNav from '@/components/ShikhoNav';
 
 interface PageProps {
@@ -48,6 +48,7 @@ export default function CircleHomePage({ params }: PageProps) {
   const [postConfirm, setPostConfirm] = useState<ActivityItem['type'] | null>(null);
   const [joinedCircleId, setJoinedCircleId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ReturnType<typeof loadState>['studentProfile']>(null);
+  const [activeTab, setActiveTab] = useState<'feed' | 'about'>('feed');
 
   useEffect(() => {
     const state = loadState();
@@ -58,7 +59,6 @@ export default function CircleHomePage({ params }: PageProps) {
     if (!found) { router.replace('/'); return; }
     setCircle(found);
     setFeed(found.activity);
-    // Init reaction counts
     const initReactions: Record<string, number> = {};
     found.activity.forEach((a) => { initReactions[a.id] = a.reactions; });
     setReactions(initReactions);
@@ -76,10 +76,6 @@ export default function CircleHomePage({ params }: PageProps) {
       }
       return next;
     });
-  };
-
-  const handlePost = (type: ActivityItem['type']) => {
-    setPostConfirm(type);
   };
 
   const confirmPost = (type: ActivityItem['type']) => {
@@ -156,47 +152,61 @@ export default function CircleHomePage({ params }: PageProps) {
     );
   }
 
-  const activeCount = circle.members.filter((m) => m.lastActive === 'এইমাত্র' || m.lastActive.includes('মিনিট')).length;
+  const activeCount = circle.members.filter(
+    (m) => m.lastActive === 'এইমাত্র' || m.lastActive.includes('মিনিট')
+  ).length;
   const isMyCircle = joinedCircleId === id;
   const totalStreak = circle.members.reduce((acc, m) => acc + m.streak, 0);
+  const captain = circle.members.find((m) => m.role === 'captain');
+  const achievedCount = circle.milestones.filter((m) => m.achieved).length;
 
   return (
     <>
-      <ShikhoNav
-        classLabel={classLabel}
-        hasCircle={!!joinedCircleId}
-        circleId={joinedCircleId}
-      />
+      <ShikhoNav classLabel={classLabel} hasCircle={!!joinedCircleId} circleId={joinedCircleId} />
 
       <div className="page-wrapper">
         <div className="container">
-          {/* Hero */}
+
+          {/* ── Hero ── */}
           <div
             className="circle-hero"
-            style={{ background: `linear-gradient(135deg, ${circle.color} 0%, ${circle.color}cc 100%)` }}
+            style={{ background: `linear-gradient(135deg, ${circle.color} 0%, ${circle.color}bb 100%)` }}
           >
             <div className="circle-hero-bg" />
             <div className="circle-hero-content">
               <span className="circle-hero-emoji">{circle.coverEmoji}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <h1>{circle.name}</h1>
-                {isMyCircle && (
+
+              {/* Tags row */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                {circle.tags.slice(0, 4).map((tag) => (
                   <span
+                    key={tag}
                     style={{
-                      background: 'rgba(255,255,255,0.2)',
-                      border: '1px solid rgba(255,255,255,0.4)',
+                      background: 'rgba(255,255,255,0.18)',
+                      border: '1px solid rgba(255,255,255,0.3)',
                       color: 'white',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '3px 10px',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      padding: '2px 9px',
                       borderRadius: '999px',
                     }}
                   >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                <h1>{circle.name}</h1>
+                {isMyCircle && (
+                  <span style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.4)', color: 'white', fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: '999px' }}>
                     তোমার সার্কেল ✓
                   </span>
                 )}
               </div>
-              <div className="tagline">{circle.tagline}</div>
+              <div className="tagline" style={{ marginBottom: 16 }}>{circle.tagline}</div>
+
+              {/* Stats row */}
               <div className="circle-hero-stats">
                 <div className="hero-stat">
                   <div className="value">{circle.members.length}</div>
@@ -207,44 +217,37 @@ export default function CircleHomePage({ params }: PageProps) {
                   <div className="label">এখন সক্রিয়</div>
                 </div>
                 <div className="hero-stat">
-                  <div className="value">{totalStreak}</div>
-                  <div className="label">মোট streak</div>
+                  <div className="value">{circle.weeklyStreak}</div>
+                  <div className="label">সাপ্তাহিক streak</div>
                 </div>
                 <div className="hero-stat">
-                  <div className="value">{circle.maxMembers - circle.members.length}</div>
-                  <div className="label">আসন বাকি</div>
+                  <div className="value">{achievedCount}/{circle.milestones.length}</div>
+                  <div className="label">মাইলস্টোন</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Shared goal + next session */}
+          {/* ── Meta row: goal + session ── */}
           <div
             className="card"
-            style={{
-              padding: '16px 20px',
-              marginBottom: 24,
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 16,
-              flexWrap: 'wrap',
-            }}
+            style={{ padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}
           >
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: 4 }}>
-                🎯 সার্কেলের লক্ষ্য
-              </div>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{circle.sharedGoal}</div>
+            <div style={{ flex: 1, minWidth: 180 }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: 4 }}>🎯 সার্কেলের লক্ষ্য</div>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.93rem' }}>{circle.sharedGoal}</div>
             </div>
-            <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: 16, minWidth: 160 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: 4 }}>
-                📅 সাপ্তাহিক লক্ষ্য
-              </div>
-              <div style={{ fontWeight: 600, color: circle.color, fontSize: '0.9rem' }}>{circle.weeklyTarget}</div>
+            <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: 16, minWidth: 150 }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: 4 }}>📅 সাপ্তাহিক লক্ষ্য</div>
+              <div style={{ fontWeight: 600, color: circle.color, fontSize: '0.88rem' }}>{circle.weeklyTarget}</div>
+            </div>
+            <div style={{ borderLeft: '1px solid var(--border)', paddingLeft: 16, minWidth: 120 }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: 4 }}>📆 প্রতিষ্ঠিত</div>
+              <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-secondary)' }}>{circle.founded}</div>
             </div>
           </div>
 
-          {/* Session banner */}
+          {/* ── Session banner ── */}
           <div className="session-banner" style={{ marginBottom: 24 }}>
             <div className="session-banner-left">
               <div className="session-pulse" />
@@ -261,22 +264,22 @@ export default function CircleHomePage({ params }: PageProps) {
             </button>
           </div>
 
-          {/* Main 2-col layout */}
+          {/* ── Main 2-col ── */}
           <div className="circle-home">
-            {/* Sidebar — Members */}
+
+            {/* ── Left sidebar ── */}
             <div>
+
+              {/* Members card */}
               <div className="card members-card">
                 <h3>
                   👥 সদস্যরা
-                  <span
-                    className="badge badge-green"
-                    style={{ marginLeft: 'auto', fontSize: '0.72rem' }}
-                  >
+                  <span className="badge badge-green" style={{ marginLeft: 'auto', fontSize: '0.72rem' }}>
                     {activeCount} সক্রিয়
                   </span>
                 </h3>
 
-                {/* "You" row (if joined) */}
+                {/* You */}
                 {isMyCircle && (
                   <div className="member-row" style={{ background: 'var(--shikho-purple-light)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', marginBottom: 4 }}>
                     <div className="member-row-avatar" style={{ borderColor: 'var(--shikho-purple)' }}>
@@ -284,9 +287,7 @@ export default function CircleHomePage({ params }: PageProps) {
                       <div className="member-online-dot" />
                     </div>
                     <div className="member-info">
-                      <div className="member-name" style={{ color: 'var(--shikho-purple)' }}>
-                        {profile?.name || 'তুমি'} (তুমি)
-                      </div>
+                      <div className="member-name" style={{ color: 'var(--shikho-purple)' }}>{profile?.name || 'তুমি'} (তুমি)</div>
                       <div className="member-last-active">এইমাত্র যোগ দিয়েছ</div>
                     </div>
                     <div className="member-streak">🔥 1</div>
@@ -302,7 +303,14 @@ export default function CircleHomePage({ params }: PageProps) {
                         {isOnline && <div className="member-online-dot" />}
                       </div>
                       <div className="member-info">
-                        <div className="member-name">{member.name}</div>
+                        <div className="member-name" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                          {member.name}
+                          {member.role === 'captain' && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 700, background: circle.color + '22', color: circle.color, padding: '1px 6px', borderRadius: '999px', border: `1px solid ${circle.color}44` }}>
+                              ক্যাপ্টেন
+                            </span>
+                          )}
+                        </div>
                         <div className="member-last-active">{member.lastActive}</div>
                       </div>
                       <div className="member-streak">🔥 {member.streak}</div>
@@ -311,7 +319,32 @@ export default function CircleHomePage({ params }: PageProps) {
                 })}
               </div>
 
-              {/* Leave button */}
+              {/* Milestones card */}
+              <div className="card" style={{ padding: 20, marginTop: 16 }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  🏆 মাইলস্টোন
+                  <span className="badge badge-purple" style={{ marginLeft: 'auto', fontSize: '0.7rem' }}>
+                    {achievedCount}/{circle.milestones.length}
+                  </span>
+                </h3>
+                {/* Progress bar */}
+                <div className="goal-bar-wrap" style={{ marginBottom: 14 }}>
+                  <div className="goal-bar-fill" style={{ width: `${Math.round((achievedCount / circle.milestones.length) * 100)}%`, background: circle.color }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {circle.milestones.map((m, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: m.achieved ? 1 : 0.55 }}>
+                      <span style={{ fontSize: '1rem', flexShrink: 0 }}>{m.emoji}</span>
+                      <span style={{ fontSize: '0.83rem', fontWeight: m.achieved ? 600 : 400, color: m.achieved ? 'var(--text-primary)' : 'var(--text-muted)', textDecoration: m.achieved ? 'none' : 'none' }}>
+                        {m.label}
+                      </span>
+                      {m.achieved && <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--green)', fontWeight: 700 }}>সম্পন্ন</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Leave */}
               {isMyCircle && (
                 <div style={{ marginTop: 12 }}>
                   {showLeaveConfirm ? (
@@ -320,20 +353,8 @@ export default function CircleHomePage({ params }: PageProps) {
                         সত্যিই সার্কেল ছেড়ে যাবে? পরে আবার যোগ দিতে পারবে।
                       </p>
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          className="btn btn-sm"
-                          style={{ flex: 1, background: 'var(--red)', color: 'white', border: 'none' }}
-                          onClick={handleLeave}
-                        >
-                          হ্যাঁ, ছেড়ে যাও
-                        </button>
-                        <button
-                          className="btn btn-sm btn-ghost"
-                          style={{ flex: 1 }}
-                          onClick={() => setShowLeaveConfirm(false)}
-                        >
-                          না, থাকো
-                        </button>
+                        <button className="btn btn-sm" style={{ flex: 1, background: 'var(--red)', color: 'white', border: 'none' }} onClick={handleLeave}>হ্যাঁ, ছেড়ে যাও</button>
+                        <button className="btn btn-sm btn-ghost" style={{ flex: 1 }} onClick={() => setShowLeaveConfirm(false)}>না, থাকো</button>
                       </div>
                     </div>
                   ) : (
@@ -349,100 +370,163 @@ export default function CircleHomePage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Main — Activity feed */}
+            {/* ── Main column ── */}
             <div>
-              <div className="card" style={{ overflow: 'hidden' }}>
-                {/* Action bar */}
-                {isMyCircle && (
-                  <div className="action-bar">
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', alignSelf: 'center', marginRight: 4 }}>
-                      সার্কেলকে জানাও:
-                    </span>
-                    <button id="post-studied" className="action-btn studied" onClick={() => handlePost('studied')}>
-                      📖 পড়েছি
-                    </button>
-                    <button id="post-stuck" className="action-btn stuck" onClick={() => handlePost('stuck')}>
-                      🤔 আটকেছি
-                    </button>
-                    <button id="post-join-me" className="action-btn join-me" onClick={() => handlePost('join_me')}>
-                      👋 আসো পড়ি
-                    </button>
-                  </div>
-                )}
 
-                {/* Post confirmation */}
-                {postConfirm && (
-                  <div
+              {/* Tab switcher */}
+              <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'white', padding: 4, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', width: 'fit-content' }}>
+                {(['feed', 'about'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
                     style={{
-                      padding: '12px 20px',
-                      background: 'var(--shikho-purple-light)',
-                      borderBottom: '1px solid var(--border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
+                      padding: '7px 18px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: 'Hind Siliguri, sans-serif',
+                      background: activeTab === tab ? circle.color : 'transparent',
+                      color: activeTab === tab ? 'white' : 'var(--text-secondary)',
+                      transition: 'all 0.2s ease',
                     }}
                   >
-                    <span style={{ fontSize: '0.88rem', color: 'var(--shikho-purple)' }}>
-                      {ACTION_EMOJIS[postConfirm]} &ldquo;{getActionLabel(postConfirm)}&rdquo; সার্কেলে পোস্ট করবে?
-                    </span>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => confirmPost(postConfirm)}
-                      >
-                        হ্যাঁ
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => setPostConfirm(null)}
-                      >
-                        না
-                      </button>
+                    {tab === 'feed' ? '📊 ফিড' : 'ℹ️ সম্পর্কে'}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── FEED TAB ── */}
+              {activeTab === 'feed' && (
+                <div className="card" style={{ overflow: 'hidden' }}>
+                  {isMyCircle && (
+                    <div className="action-bar">
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', alignSelf: 'center', marginRight: 4 }}>
+                        সার্কেলকে জানাও:
+                      </span>
+                      <button id="post-studied" className="action-btn studied" onClick={() => setPostConfirm('studied')}>📖 পড়েছি</button>
+                      <button id="post-stuck" className="action-btn stuck" onClick={() => setPostConfirm('stuck')}>🤔 আটকেছি</button>
+                      <button id="post-join-me" className="action-btn join-me" onClick={() => setPostConfirm('join_me')}>👋 আসো পড়ি</button>
+                    </div>
+                  )}
+
+                  {postConfirm && (
+                    <div style={{ padding: '12px 20px', background: 'var(--shikho-purple-light)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ fontSize: '0.88rem', color: 'var(--shikho-purple)' }}>
+                        {ACTION_EMOJIS[postConfirm]} &ldquo;{getActionLabel(postConfirm)}&rdquo; পোস্ট করবে?
+                      </span>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="btn btn-primary btn-sm" onClick={() => confirmPost(postConfirm)}>হ্যাঁ</button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => setPostConfirm(null)}>না</button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ padding: '4px 20px 20px' }}>
+                    <div className="activity-header">
+                      <h3>📊 সার্কেল ফিড</h3>
+                      <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>{feed.length} আপডেট</span>
+                    </div>
+
+                    {feed.map((item) => (
+                      <div key={item.id} className="activity-item">
+                        <div className="activity-avatar">{item.avatar}</div>
+                        <div className="activity-content">
+                          <div className="activity-top">
+                            <span className="activity-name">{item.memberName === 'আমি' ? (profile?.name || 'তুমি') : item.memberName}</span>
+                            <span className={`activity-type-badge ${TYPE_CLASS[item.type]}`}>
+                              {ACTION_EMOJIS[item.type]} {TYPE_LABELS[item.type]}
+                            </span>
+                          </div>
+                          <div className="activity-text">{item.content}</div>
+                          <div className="activity-footer">
+                            <span className="activity-time">{item.timestamp}</span>
+                            <button
+                              className={`reaction-btn ${reacted.has(item.id) ? 'reacted' : ''}`}
+                              onClick={() => handleReact(item.id)}
+                            >
+                              {reacted.has(item.id) ? '❤️' : '🤍'} {reactions[item.id] || 0}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── ABOUT TAB ── */}
+              {activeTab === 'about' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+                  {/* Description */}
+                  <div className="card" style={{ padding: 20 }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 10 }}>📖 এই সার্কেল সম্পর্কে</h3>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>{circle.description}</p>
+                  </div>
+
+                  {/* Study approach */}
+                  <div className="card" style={{ padding: 20 }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12 }}>🎓 কীভাবে পড়া হয়</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {circle.studyApproach.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                          <span style={{ width: 22, height: 22, background: circle.color + '22', color: circle.color, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>
+                            {i + 1}
+                          </span>
+                          <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                )}
 
-                {/* Feed */}
-                <div style={{ padding: '4px 20px 20px' }}>
-                  <div className="activity-header">
-                    <h3>📊 সার্কেল ফিড</h3>
-                    <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>
-                      {feed.length} আপডেট
-                    </span>
+                  {/* Rules */}
+                  <div className="card" style={{ padding: 20 }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12 }}>📜 সার্কেলের নিয়মকানুন</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {circle.rules.map((rule, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '8px 12px', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', borderLeft: `3px solid ${circle.color}` }}>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{rule}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {feed.map((item) => (
-                    <div key={item.id} className="activity-item">
-                      <div className="activity-avatar">{item.avatar}</div>
-                      <div className="activity-content">
-                        <div className="activity-top">
-                          <span className="activity-name">{item.memberName === 'আমি' ? (profile?.name || 'তুমি') : item.memberName}</span>
-                          <span className={`activity-type-badge ${TYPE_CLASS[item.type]}`}>
-                            {ACTION_EMOJIS[item.type]} {TYPE_LABELS[item.type]}
-                          </span>
+                  {/* Captain info */}
+                  {captain && (
+                    <div className="card" style={{ padding: 20 }}>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12 }}>👑 সার্কেল ক্যাপ্টেন</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: '50%', background: circle.color + '22', border: `2px solid ${circle.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
+                          {captain.avatar}
                         </div>
-                        <div className="activity-text">{item.content}</div>
-                        <div className="activity-footer">
-                          <span className="activity-time">{item.timestamp}</span>
-                          <button
-                            className={`reaction-btn ${reacted.has(item.id) ? 'reacted' : ''}`}
-                            onClick={() => handleReact(item.id)}
-                          >
-                            {reacted.has(item.id) ? '❤️' : '🤍'} {reactions[item.id] || 0}
-                          </button>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '1rem' }}>{captain.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                            🔥 {captain.streak} দিনের streak · {captain.lastActive}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* All tags */}
+                  <div className="card" style={{ padding: 20 }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 12 }}>🏷️ বিষয় ও ট্যাগ</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {circle.tags.map((tag) => (
+                        <span key={tag} className="badge badge-purple" style={{ fontSize: '0.82rem' }}>{tag}</span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Toast */}
       {toast && <div className="toast">{toast}</div>}
     </>
   );
