@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd study-circle-app && npm run build",
+  "devCommand": "cd study-circle-app && npm run dev",
+  "installCommand": "cd study-circle-app && npm install",
+  "framework": null
+}
