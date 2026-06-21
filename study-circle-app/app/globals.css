@@ -1,5 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+@import "tailwindcss";
+
+@theme {
+  --color-shikho-magenta: #E91E8C;
+  --color-shikho-magenta-dark: #C4186E;
+  --color-shikho-magenta-light: #FDE8F3;
+  --color-shikho-purple: #6C3CE1;
+  --color-shikho-purple-light: #EDE8FD;
+  --color-shikho-blue: #0984E3;
+}
 /* ─── Design Tokens ─────────────────────────────────────────────────────────── */
 :root {
   /* Shikho brand colors */

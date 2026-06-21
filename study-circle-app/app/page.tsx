@@ -76,9 +76,9 @@ export default function Home() {
 
       <div className="page-wrapper">
         <div className="container">
-          <div className="dashboard-grid">
+          <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
             {/* ── Main content ── */}
-            <div>
+            <div className="flex-1 min-w-0">
               {/* Section header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <div>
@@ -118,7 +118,7 @@ export default function Home() {
               </div>
 
               {/* Course grid */}
-              <div className="course-grid">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                 {COURSES.map((c, i) => (
                   <div key={i}>
                     <div className="course-card">
@@ -161,7 +161,7 @@ export default function Home() {
             </div>
 
             {/* ── Right sidebar ── */}
-            <div>
+            <div className="w-full md:w-80 lg:w-96 flex-shrink-0 flex flex-col gap-6">
               {/* StudyCircle CTA or banner */}
               {state?.joinedCircleId ? (
                 <div

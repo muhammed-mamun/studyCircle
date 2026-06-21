@@ -274,10 +274,10 @@ export default function CircleHomePage() {
           </div>
 
           {/* ── Main 2-col ── */}
-          <div className="circle-home">
+          <div className="flex flex-col-reverse lg:flex-row gap-6">
 
             {/* ── Left sidebar ── */}
-            <div>
+            <div className="w-full lg:w-80 flex-shrink-0">
 
               {/* Members card */}
               <div className="card members-card">
@@ -380,7 +380,7 @@ export default function CircleHomePage() {
             </div>
 
             {/* ── Main column ── */}
-            <div>
+            <div className="flex-1 min-w-0">
 
               {/* Tab switcher */}
               <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: 'white', padding: 4, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', width: 'fit-content' }}>

@@ -281,8 +281,8 @@ export default function AIConcierge({ onClose, onComplete }: Props) {
   }
 
   return (
-    <div className="concierge-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="concierge-modal" role="dialog" aria-label="StudyCircle AI Concierge">
+    <div className="concierge-overlay p-0 sm:p-4 md:p-6" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="concierge-modal w-full h-full sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-[var(--radius-xl)]" role="dialog" aria-label="StudyCircle AI Concierge">
         {/* Header */}
         <div className="concierge-header">
           <div className="concierge-avatar">🤖</div>

@@ -28,14 +28,14 @@ export default function ShikhoNav({ classLabel = 'ক্লাস ১২', hasCi
           className={`nav-tab ${pathname === '/' ? 'active' : ''}`}
           onClick={() => router.push('/')}
         >
-          🏠 হোম
+          🏠 <span className="hidden md:inline">হোম</span>
         </button>
         <button
           id="nav-courses"
           className={`nav-tab ${pathname === '/courses' ? 'active' : ''}`}
           onClick={() => router.push('/')}
         >
-          📚 কোর্স
+          📚 <span className="hidden md:inline">কোর্স</span>
         </button>
         {hasCircle && (
           <button
@@ -44,7 +44,7 @@ export default function ShikhoNav({ classLabel = 'ক্লাস ১২', hasCi
             onClick={() => router.push(`/circle/${circleId}`)}
             style={{ position: 'relative' }}
           >
-            🤝 StudyCircle
+            🤝 <span className="hidden md:inline">StudyCircle</span>
             <span
               style={{
                 position: 'absolute',
@@ -64,14 +64,14 @@ export default function ShikhoNav({ classLabel = 'ক্লাস ১২', hasCi
             onClick={onOpenConcierge}
             style={{ color: 'var(--shikho-magenta)' }}
           >
-            ✨ StudyCircle
+            ✨ <span className="hidden md:inline">StudyCircle</span>
           </button>
         )}
       </div>
 
       {/* Right actions */}
       <div className="nav-actions">
-        <span className="nav-class-badge">{classLabel}</span>
+        <span className="nav-class-badge hidden sm:inline-block">{classLabel}</span>
         <div className="nav-avatar" title="আমার প্রোফাইল">M</div>
       </div>
     </nav>
